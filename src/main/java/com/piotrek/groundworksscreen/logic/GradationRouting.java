@@ -26,17 +26,75 @@ public final class GradationRouting {
         }
 
         int[] remainder = new int[source.length];
-        int remainingBudget = limit;
+        if (limit <= 0 || source.length <= 1) {
+            return new Batch(selectedUnits, remainder);
+        }
 
-        for (int id = 1; id < source.length && remainingBudget > 0; id++) {
+        long remainderTotal = 0L;
+        for (int id = 1; id < source.length; id++) {
+            if (id == selectedMaterialId) {
+                continue;
+            }
+            remainderTotal += Math.max(0, source[id]);
+        }
+
+        if (remainderTotal <= 0L) {
+            return new Batch(selectedUnits, remainder);
+        }
+
+        if (remainderTotal <= limit) {
+            for (int id = 1; id < source.length; id++) {
+                if (id != selectedMaterialId) {
+                    remainder[id] = Math.max(0, source[id]);
+                }
+            }
+            return new Batch(selectedUnits, remainder);
+        }
+
+        long[] fractionalRemainders = new long[source.length];
+        int assigned = 0;
+
+        for (int id = 1; id < source.length; id++) {
             if (id == selectedMaterialId) {
                 continue;
             }
 
             int available = Math.max(0, source[id]);
-            int amount = Math.min(available, remainingBudget);
-            remainder[id] = amount;
-            remainingBudget -= amount;
+            if (available <= 0) {
+                continue;
+            }
+
+            long scaled = (long) limit * available;
+            int base = (int) (scaled / remainderTotal);
+            remainder[id] = Math.min(base, available);
+            fractionalRemainders[id] = scaled % remainderTotal;
+            assigned += remainder[id];
+        }
+
+        while (assigned < limit) {
+            int bestId = 0;
+            long bestRemainder = Long.MIN_VALUE;
+
+            for (int id = 1; id < source.length; id++) {
+                if (id == selectedMaterialId
+                        || remainder[id] >= Math.max(0, source[id])) {
+                    continue;
+                }
+
+                long candidate = fractionalRemainders[id];
+                if (candidate > bestRemainder) {
+                    bestRemainder = candidate;
+                    bestId = id;
+                }
+            }
+
+            if (bestId == 0) {
+                break;
+            }
+
+            remainder[bestId]++;
+            fractionalRemainders[bestId] = Long.MIN_VALUE;
+            assigned++;
         }
 
         return new Batch(selectedUnits, remainder);
