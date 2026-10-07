@@ -18,6 +18,21 @@ Early-release stationary screening plant for Minecraft Java 26.3 / Fabric.
 - A blocked or full receiver never causes silent material deletion.
 - Conveyor rollers and the eccentric screen drive animate while material is moving.
 
+## Crafting and placement
+
+The gradation screen is a normal survival item and can be crafted in a crafting table:
+
+    I I I
+    R H R
+    I P I
+
+- I = iron ingot
+- R = redstone
+- H = hopper
+- P = piston
+
+Right-click a block with the item to place the complete screen machine. The item is consumed in survival mode. Shift + right-click the empty machine with an empty hand retrieves it again.
+
 ## Selecting material
 
 - Right-click while holding dirt, sand, gravel, cobblestone or stone to select its Groundworks material.

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "RHR",
+    "IPI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "H": "minecraft:hopper",
+    "P": "minecraft:piston"
+  },
+  "result": {
+    "id": "pw_groundworks_gradation_screen:gradation_screen",
+    "count": 1
+  }
+}
