@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GradationRoutingTest {
 
@@ -16,7 +17,7 @@ class GradationRoutingTest {
 
         assertEquals(32, batch.selectedUnits());
         assertArrayEquals(
-                new int[] {0, 20, 12, 0, 0},
+                new int[] {0, 7, 21, 0, 4},
                 batch.remainderUnits()
         );
     }
@@ -30,7 +31,7 @@ class GradationRoutingTest {
 
         assertEquals(32, batch.selectedUnits());
         assertArrayEquals(
-                new int[] {0, 32, 0, 0},
+                new int[] {0, 16, 0, 16},
                 batch.remainderUnits()
         );
     }
@@ -45,6 +46,35 @@ class GradationRoutingTest {
         assertEquals(0, batch.selectedUnits());
         assertArrayEquals(
                 new int[] {0, 10, 0, 18},
+                batch.remainderUnits()
+        );
+    }
+
+    @Test
+    void continuousLowIdMaterialCannotStarveHigherIdMaterial() {
+        int[] units = new int[] {0, 1000, 1000, 1000, 1000};
+
+        GradationRouting.Batch batch =
+                GradationRouting.plan(units, 4, 32);
+
+        int[] remainder = batch.remainderUnits();
+        assertEquals(32, remainder[1] + remainder[2] + remainder[3]);
+        assertTrue(remainder[1] > 0);
+        assertTrue(remainder[2] > 0);
+        assertTrue(remainder[3] > 0);
+        assertEquals(0, remainder[4]);
+    }
+
+    @Test
+    void remainderUnderBudgetPassesThroughExactly() {
+        int[] units = new int[] {0, 3, 4, 5};
+
+        GradationRouting.Batch batch =
+                GradationRouting.plan(units, 2, 32);
+
+        assertEquals(4, batch.selectedUnits());
+        assertArrayEquals(
+                new int[] {0, 3, 0, 5},
                 batch.remainderUnits()
         );
     }

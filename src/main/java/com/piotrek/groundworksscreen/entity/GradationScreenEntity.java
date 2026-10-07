@@ -39,6 +39,7 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
     public static final int DEFAULT_SELECTED_MATERIAL_ID = 3;
 
     private static final int OUTPUT_SURFACE_SEARCH_DEPTH = 16;
+    private static final double RECEIVER_SEARCH_RADIUS = 5.50D;
 
     private static final EntityDataAccessor<Integer> SELECTED_MATERIAL_ID =
             SynchedEntityData.defineId(
@@ -169,7 +170,7 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
                         level,
                         outputPoint,
                         this,
-                        2.75D
+                        RECEIVER_SEARCH_RADIUS
                 );
 
         int consumed = 0;
@@ -278,6 +279,31 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
                 0.0D,
                 Math.sin(yawRad)
         );
+    }
+
+    @Override
+    public int receiveMaterialAt(
+            ServerLevel level,
+            Vec3 worldPoint,
+            GranularMaterial material,
+            int units
+    ) {
+        if (!canReceiveAt(worldPoint)) {
+            return 0;
+        }
+        return acceptMaterial(material, units);
+    }
+
+    @Override
+    public int receiveCompositionAt(
+            ServerLevel level,
+            Vec3 worldPoint,
+            GranularComposition composition
+    ) {
+        if (!canReceiveAt(worldPoint)) {
+            return 0;
+        }
+        return acceptComposition(composition);
     }
 
     @Override
