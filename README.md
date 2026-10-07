@@ -42,8 +42,8 @@ Publish Groundworks to Maven Local first:
     cd ../peterwolfs-groundworks
     ./gradlew publishToMavenLocal
 
-Then, from this repository, use the Gradle wrapper from the Groundworks checkout:
+Then build this mod with its own Gradle wrapper:
 
-    ../peterwolfs-groundworks/gradlew clean test build
+    ./gradlew clean test build
 
 The resulting jar is written to build/libs.

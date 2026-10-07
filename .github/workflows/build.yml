@@ -38,5 +38,5 @@ jobs:
       - name: Test and build gradation screen
         working-directory: screen
         run: |
-          chmod +x ../groundworks/gradlew
-          ../groundworks/gradlew clean test build
+          chmod +x gradlew
+          ./gradlew clean test build
