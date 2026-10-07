@@ -427,11 +427,10 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
                 && held.isEmpty()) {
             if (!isEmpty()) {
                 if (!level().isClientSide()) {
-                    player.displayClientMessage(
+                    player.sendOverlayMessage(
                             Component.translatable(
                                     "message.pw_groundworks_gradation_screen.not_empty"
-                            ),
-                            true
+                            )
                     );
                 }
                 return InteractionResult.FAIL;
@@ -473,12 +472,11 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
 
             setSelectedMaterial(material.id());
 
-            player.displayClientMessage(
+            player.sendOverlayMessage(
                     Component.translatable(
                             "message.pw_groundworks_gradation_screen.selected_material",
                             material.name()
-                    ),
-                    true
+                    )
             );
 
             level().playSound(
