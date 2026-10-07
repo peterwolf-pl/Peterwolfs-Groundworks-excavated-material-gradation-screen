@@ -31,7 +31,7 @@ public class GroundworksGradationScreenMod implements ModInitializer {
             BuiltInRegistries.ENTITY_TYPE,
             GRADATION_SCREEN_KEY,
             EntityType.Builder.of(GradationScreenEntity::new, MobCategory.MISC)
-                    .sized(3.0F, 4.5F)
+                    .sized(2.25F, 3.25F)
                     .clientTrackingRange(14)
                     .build(GRADATION_SCREEN_KEY)
     );
