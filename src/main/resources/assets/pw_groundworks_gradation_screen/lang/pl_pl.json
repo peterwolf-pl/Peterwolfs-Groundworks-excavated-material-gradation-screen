@@ -1,0 +1,6 @@
+{
+  "item.pw_groundworks_gradation_screen.gradation_screen": "Przesiewacz urobku Groundworks",
+  "entity.pw_groundworks_gradation_screen.gradation_screen": "Przesiewacz urobku Groundworks",
+  "message.pw_groundworks_gradation_screen.selected_material": "Materiał odsiewany: %s",
+  "message.pw_groundworks_gradation_screen.not_empty": "W przesiewaczu nadal znajduje się urobek."
+}

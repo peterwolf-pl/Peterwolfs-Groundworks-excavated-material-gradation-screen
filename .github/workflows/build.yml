@@ -1,0 +1,41 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gradation screen
+        uses: actions/checkout@v4
+        with:
+          path: screen
+
+      - name: Checkout Groundworks
+        uses: actions/checkout@v4
+        with:
+          repository: peterwolf-pl/peterwolfs-groundworks
+          path: groundworks
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Publish Groundworks to Maven Local
+        working-directory: groundworks
+        run: |
+          chmod +x gradlew
+          ./gradlew publishToMavenLocal
+
+      - name: Test and build gradation screen
+        working-directory: screen
+        run: |
+          chmod +x ../groundworks/gradlew
+          ../groundworks/gradlew clean test build
