@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "pw_groundworks_gradation_screen",
+  "version": "${version}",
+  "name": "Peterwolf's Groundworks Excavated Material Gradation Screen",
+  "description": "A stationary Groundworks screening plant that separates one selected material from mixed excavated material and sends both streams to elevated conveyors.",
+  "authors": ["Piotrek"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.piotrek.groundworksscreen.GroundworksGradationScreenMod"],
+    "client": ["com.piotrek.groundworksscreen.client.GroundworksGradationScreenClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*",
+    "pw_groundworks": ">=0.1.0"
+  },
+  "suggests": {
+    "pw_groundworks_loader": "*",
+    "pw_groundworks_excavator": "*",
+    "pw_groundworks_dump_truck": "*"
+  }
+}
