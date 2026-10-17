@@ -1,4 +1,5 @@
 {
+  "itemGroup.pw_groundworks.group": "Groundworks",
   "item.pw_groundworks_gradation_screen.gradation_screen": "Przesiewacz urobku Groundworks",
   "entity.pw_groundworks_gradation_screen.gradation_screen": "Przesiewacz urobku Groundworks",
   "message.pw_groundworks_gradation_screen.selected_material": "Materiał odsiewany: %s",

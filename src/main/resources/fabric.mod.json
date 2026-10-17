@@ -6,6 +6,7 @@
   "description": "A stationary Groundworks screening plant that separates one selected material from mixed excavated material and sends both streams to elevated conveyors.",
   "authors": ["Piotrek"],
   "license": "MIT",
+  "icon": "assets/pw_groundworks_gradation_screen/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": ["com.piotrek.groundworksscreen.GroundworksGradationScreenMod"],

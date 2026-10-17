@@ -55,10 +55,20 @@ public class GroundworksGradationScreenMod implements ModInitializer {
                     Identifier.withDefaultNamespace("tools_and_utilities")
             );
 
+    /** Same key as {@code GroundworksItems} tab {@code pw_groundworks:main}. */
+    public static final ResourceKey<CreativeModeTab> GROUNDWORKS_TAB =
+            ResourceKey.create(
+                    Registries.CREATIVE_MODE_TAB,
+                    Identifier.fromNamespaceAndPath("pw_groundworks", "main")
+            );
+
     @Override
     public void onInitialize() {
         LOGGER.info("Initializing Peterwolf's Groundworks Gradation Screen for MC 26.3...");
 
+        CreativeModeTabEvents.modifyOutputEvent(GROUNDWORKS_TAB).register(
+                output -> output.accept(GRADATION_SCREEN_ITEM)
+        );
         CreativeModeTabEvents.modifyOutputEvent(TOOLS_AND_UTILITIES_TAB).register(
                 output -> output.accept(GRADATION_SCREEN_ITEM)
         );
