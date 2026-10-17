@@ -12,7 +12,8 @@ Early-release stationary screening plant for Minecraft Java 26.3 / Fabric.
 - Supports dirt, sand, gravel, cobblestone and mixed Groundworks compositions.
 - One selected material is routed to the side conveyor.
 - Every other material is routed to the second conveyor.
-- Both conveyors rise high enough to place a Groundworks dump truck or another screen below the discharge point.
+- Both conveyors rise upwards (~4.5 blocks above grade, extended by 3 extra blocks / ~7.5m reach) with reinforced steel A-frame ground supports, allowing Groundworks dump trucks or secondary screening plants to park underneath easily.
+- Real-time 3D volumetric material flow visualization directly on both conveyor belts and the vibrating screen deck, rendered with authentic block textures (dirt, sand, gravel, cobblestone) and flowing dynamically with belt motion.
 - If no compatible receiver is below an outlet, material falls back into Groundworks terrain and forms a pile.
 - Exact per-material volume is conserved.
 - A blocked or full receiver never causes silent material deletion.
@@ -23,7 +24,8 @@ Early-release stationary screening plant for Minecraft Java 26.3 / Fabric.
 - Right-click while holding dirt, sand, gravel, cobblestone or stone to select its Groundworks material.
 - Right-click with another item or with an empty hand to cycle through available Groundworks materials.
 - Default selected material is gravel.
-- Shift + right-click with an empty hand retrieves the machine only when the internal buffer is empty.
+- Shift + right-click with an empty hand retrieves the machine only when the internal buffer is empty. If the inventory is full, the item is dropped at the player's feet.
+- The placeable item is in the Groundworks creative tab and in Tools and Utilities. Search for "Przesiewacz" or "Gradation".
 
 ## Typical workflow
 

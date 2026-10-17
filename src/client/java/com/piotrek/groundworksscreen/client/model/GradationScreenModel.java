@@ -101,15 +101,16 @@ public class GradationScreenModel extends EntityModel<GradationScreenRenderState
                 PartPose.rotation((float) Math.toRadians(-5.0F), 0.0F, 0.0F)
         );
 
+        // Extended by 3 blocks (+48px, 108px total) and inclined upwards (-18 deg around Z)
         root.addOrReplaceChild(
                 "selected_conveyor",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(11.0F, -10.0F, -8.0F, 60.0F, 4.0F, 16.0F)
+                        .addBox(11.0F, -10.0F, -8.0F, 108.0F, 4.0F, 16.0F)
                         .texOffs(0, 0)
-                        .addBox(11.0F, -15.0F, -10.0F, 60.0F, 4.0F, 3.0F)
+                        .addBox(11.0F, -16.0F, -10.0F, 108.0F, 6.0F, 2.0F)
                         .texOffs(0, 0)
-                        .addBox(11.0F, -15.0F, 7.0F, 60.0F, 4.0F, 3.0F),
+                        .addBox(11.0F, -16.0F, 8.0F, 108.0F, 6.0F, 2.0F),
                 PartPose.rotation(
                         0.0F,
                         0.0F,
@@ -117,39 +118,58 @@ public class GradationScreenModel extends EntityModel<GradationScreenRenderState
                 )
         );
 
+        // Extended by 3 blocks (+48px, 116px total) and inclined upwards (-18 deg around X)
         root.addOrReplaceChild(
                 "remainder_conveyor",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(-8.0F, -10.0F, -84.0F, 16.0F, 4.0F, 68.0F)
+                        .addBox(-8.0F, -10.0F, -132.0F, 16.0F, 4.0F, 116.0F)
                         .texOffs(0, 0)
-                        .addBox(-10.0F, -15.0F, -84.0F, 3.0F, 4.0F, 68.0F)
+                        .addBox(-10.0F, -16.0F, -132.0F, 2.0F, 6.0F, 116.0F)
                         .texOffs(0, 0)
-                        .addBox(7.0F, -15.0F, -84.0F, 3.0F, 4.0F, 68.0F),
+                        .addBox(8.0F, -16.0F, -132.0F, 2.0F, 6.0F, 116.0F),
                 PartPose.rotation(
-                        (float) Math.toRadians(16.0F),
+                        (float) Math.toRadians(-18.0F),
                         0.0F,
                         0.0F
                 )
         );
 
+        // Steel truss support legs anchoring the elevated selected conveyor to the ground
         root.addOrReplaceChild(
                 "selected_support",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(42.0F, 0.0F, -5.0F, 4.0F, 40.0F, 4.0F)
+                        .addBox(50.0F, -26.0F, -6.0F, 3.0F, 39.0F, 3.0F)
                         .texOffs(0, 0)
-                        .addBox(59.0F, 0.0F, -5.0F, 4.0F, 45.0F, 4.0F),
+                        .addBox(50.0F, -26.0F, 3.0F, 3.0F, 39.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(50.0F, -6.0F, -6.0F, 3.0F, 3.0F, 12.0F)
+                        .texOffs(0, 0)
+                        .addBox(94.0F, -40.0F, -6.0F, 3.0F, 53.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(94.0F, -40.0F, 3.0F, 3.0F, 53.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(94.0F, -15.0F, -6.0F, 3.0F, 3.0F, 12.0F),
                 PartPose.ZERO
         );
 
+        // Steel truss support legs anchoring the elevated remainder conveyor to the ground
         root.addOrReplaceChild(
                 "remainder_support",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(-2.0F, 0.0F, -58.0F, 4.0F, 42.0F, 4.0F)
+                        .addBox(-6.0F, -26.0F, -54.0F, 3.0F, 39.0F, 3.0F)
                         .texOffs(0, 0)
-                        .addBox(-2.0F, 0.0F, -78.0F, 4.0F, 48.0F, 4.0F),
+                        .addBox(3.0F, -26.0F, -54.0F, 3.0F, 39.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(-6.0F, -6.0F, -54.0F, 12.0F, 3.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(-6.0F, -40.0F, -98.0F, 3.0F, 53.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(3.0F, -40.0F, -98.0F, 3.0F, 53.0F, 3.0F)
+                        .texOffs(0, 0)
+                        .addBox(-6.0F, -15.0F, -98.0F, 12.0F, 3.0F, 3.0F),
                 PartPose.ZERO
         );
 
@@ -157,16 +177,16 @@ public class GradationScreenModel extends EntityModel<GradationScreenRenderState
                 "selected_roller",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(-2.0F, -9.0F, -9.0F, 4.0F, 18.0F, 18.0F),
-                PartPose.offset(66.0F, -26.0F, 0.0F)
+                        .addBox(-2.0F, -8.0F, -8.0F, 4.0F, 16.0F, 16.0F),
+                PartPose.offset(115.0F, -46.0F, 0.0F)
         );
 
         root.addOrReplaceChild(
                 "remainder_roller",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(-9.0F, -9.0F, -2.0F, 18.0F, 18.0F, 4.0F),
-                PartPose.offset(0.0F, -27.0F, -78.0F)
+                        .addBox(-8.0F, -8.0F, -2.0F, 16.0F, 16.0F, 4.0F),
+                PartPose.offset(0.0F, -49.0F, -119.0F)
         );
 
         root.addOrReplaceChild(
@@ -183,7 +203,7 @@ public class GradationScreenModel extends EntityModel<GradationScreenRenderState
     @Override
     public void setupAnim(GradationScreenRenderState state) {
         selectedRoller.zRot = state.active ? -state.beltPhase : 0.0F;
-        remainderRoller.xRot = state.active ? state.beltPhase : 0.0F;
+        remainderRoller.xRot = state.active ? -state.beltPhase : 0.0F;
         eccentricWeight.zRot = state.active
                 ? state.beltPhase * 1.75F
                 : 0.0F;
