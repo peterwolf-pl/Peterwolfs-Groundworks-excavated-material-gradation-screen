@@ -3,7 +3,7 @@ package com.piotrek.groundworksscreen;
 import com.piotrek.groundworksscreen.entity.GradationScreenEntity;
 import com.piotrek.groundworksscreen.item.GradationScreenItem;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -55,11 +55,21 @@ public class GroundworksGradationScreenMod implements ModInitializer {
                     Identifier.withDefaultNamespace("tools_and_utilities")
             );
 
+    /** Same key as {@code GroundworksItems} tab {@code pw_groundworks:main}. */
+    public static final ResourceKey<CreativeModeTab> GROUNDWORKS_TAB =
+            ResourceKey.create(
+                    Registries.CREATIVE_MODE_TAB,
+                    Identifier.fromNamespaceAndPath("pw_groundworks", "main")
+            );
+
     @Override
     public void onInitialize() {
         LOGGER.info("Initializing Peterwolf's Groundworks Gradation Screen for MC 26.3...");
 
-        CreativeModeTabEvents.modifyOutputEvent(TOOLS_AND_UTILITIES_TAB).register(
+        ItemGroupEvents.modifyEntriesEvent(GROUNDWORKS_TAB).register(
+                output -> output.accept(GRADATION_SCREEN_ITEM)
+        );
+        ItemGroupEvents.modifyEntriesEvent(TOOLS_AND_UTILITIES_TAB).register(
                 output -> output.accept(GRADATION_SCREEN_ITEM)
         );
     }

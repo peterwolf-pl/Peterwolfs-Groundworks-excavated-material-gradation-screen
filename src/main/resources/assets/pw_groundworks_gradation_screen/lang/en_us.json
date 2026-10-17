@@ -1,4 +1,5 @@
 {
+  "itemGroup.pw_groundworks.group": "Groundworks",
   "item.pw_groundworks_gradation_screen.gradation_screen": "Excavated Material Gradation Screen",
   "entity.pw_groundworks_gradation_screen.gradation_screen": "Excavated Material Gradation Screen",
   "message.pw_groundworks_gradation_screen.selected_material": "Screened material: %s",

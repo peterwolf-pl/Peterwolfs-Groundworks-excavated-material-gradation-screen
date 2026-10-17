@@ -2,6 +2,7 @@ package com.piotrek.groundworksscreen.entity;
 
 import com.piotrek.groundworks.api.GroundworksApi;
 import com.piotrek.groundworks.api.container.GranularContainerTransferApi;
+import com.piotrek.groundworks.api.excavation.ExcavationResult;
 import com.piotrek.groundworks.api.container.IWorldGranularContainer;
 import com.piotrek.groundworks.api.deposit.DepositResult;
 import com.piotrek.groundworks.api.material.GranularComposition;
@@ -10,6 +11,8 @@ import com.piotrek.groundworks.api.material.GranularMaterialRegistry;
 import com.piotrek.groundworksscreen.GroundworksGradationScreenMod;
 import com.piotrek.groundworksscreen.logic.GradationRouting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -27,11 +30,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class GradationScreenEntity extends Entity implements IWorldGranularContainer {
     public static final int CAPACITY = 8 * 512;
@@ -46,7 +53,17 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
                     GradationScreenEntity.class,
                     EntityDataSerializers.INT
             );
+    private static final EntityDataAccessor<Integer> REMAINDER_MATERIAL_ID =
+            SynchedEntityData.defineId(
+                    GradationScreenEntity.class,
+                    EntityDataSerializers.INT
+            );
     private static final EntityDataAccessor<Integer> STORED_UNITS =
+            SynchedEntityData.defineId(
+                    GradationScreenEntity.class,
+                    EntityDataSerializers.INT
+            );
+    private static final EntityDataAccessor<Integer> SELECTED_UNITS =
             SynchedEntityData.defineId(
                     GradationScreenEntity.class,
                     EntityDataSerializers.INT
@@ -66,7 +83,9 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(SELECTED_MATERIAL_ID, DEFAULT_SELECTED_MATERIAL_ID);
+        builder.define(REMAINDER_MATERIAL_ID, GranularMaterialRegistry.DIRT != null ? GranularMaterialRegistry.DIRT.id() : 1);
         builder.define(STORED_UNITS, 0);
+        builder.define(SELECTED_UNITS, 0);
         builder.define(ACTIVE, false);
     }
 
@@ -79,6 +98,7 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
         }
 
         ServerLevel serverLevel = (ServerLevel) level();
+        ingestHopperTerrain(serverLevel);
         boolean moved = processMaterial(serverLevel);
         entityData.set(ACTIVE, moved);
 
@@ -165,13 +185,7 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
             return 0;
         }
 
-        IWorldGranularContainer receiver =
-                GranularContainerTransferApi.findReceiver(
-                        level,
-                        outputPoint,
-                        this,
-                        RECEIVER_SEARCH_RADIUS
-                );
+        IWorldGranularContainer receiver = findConveyorReceiver(level, outputPoint);
 
         int consumed = 0;
 
@@ -210,9 +224,121 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
 
         if (consumed > 0) {
             buffer.remove(material.id(), consumed);
+            Vec3 targetVec = receiver instanceof Entity e
+                    ? e.position().add(0.0D, 1.8D, 0.0D)
+                    : null;
+            spawnFallingStreamParticles(level, outputPoint, targetVec, material);
+
+            if (receiver instanceof Entity e && tickCount % 6 == 0) {
+                level.playSound(
+                        null,
+                        e.getX(),
+                        e.getY() + 1.5D,
+                        e.getZ(),
+                        SoundEvents.GRAVEL_PLACE,
+                        SoundSource.BLOCKS,
+                        0.70F,
+                        0.95F
+                );
+            }
         }
 
         return consumed;
+    }
+
+    @Nullable
+    private IWorldGranularContainer findConveyorReceiver(
+            ServerLevel level,
+            Vec3 outputPoint
+    ) {
+        AABB searchBox = new AABB(
+                outputPoint.x - 4.5D,
+                level.getMinY(),
+                outputPoint.z - 4.5D,
+                outputPoint.x + 4.5D,
+                outputPoint.y + 2.0D,
+                outputPoint.z + 4.5D
+        );
+
+        List<Entity> candidates = level.getEntitiesOfClass(
+                Entity.class,
+                searchBox,
+                entity -> entity != this && entity instanceof IWorldGranularContainer
+        );
+
+        IWorldGranularContainer best = null;
+        double bestDistSqr = Double.MAX_VALUE;
+
+        for (Entity entity : candidates) {
+            IWorldGranularContainer container = (IWorldGranularContainer) entity;
+
+            // 1. Check direct hit at discharge point
+            if (container.canReceiveAt(outputPoint)) {
+                double dist = entity.distanceToSqr(outputPoint.x, outputPoint.y, outputPoint.z);
+                if (dist < bestDistSqr) {
+                    bestDistSqr = dist;
+                    best = container;
+                }
+                continue;
+            }
+
+            // 2. Probe down the vertical gravity fall stream from conveyor lip to vehicle
+            boolean hit = false;
+            for (double y = outputPoint.y; y >= entity.getY(); y -= 0.40D) {
+                Vec3 probe = new Vec3(outputPoint.x, y, outputPoint.z);
+                if (container.canReceiveAt(probe)) {
+                    hit = true;
+                    break;
+                }
+            }
+
+            // 3. Probe with a slight horizontal margin around the vehicle body
+            if (!hit) {
+                double bedY = entity.getY() + 1.80D;
+                for (double dx = -1.20D; dx <= 1.20D && !hit; dx += 1.20D) {
+                    for (double dz = -1.20D; dz <= 1.20D && !hit; dz += 1.20D) {
+                        Vec3 probe = new Vec3(outputPoint.x + dx, bedY, outputPoint.z + dz);
+                        if (container.canReceiveAt(probe)) {
+                            hit = true;
+                        }
+                    }
+                }
+            }
+
+            if (hit) {
+                double dist = entity.distanceToSqr(outputPoint.x, outputPoint.y, outputPoint.z);
+                if (dist < bestDistSqr) {
+                    bestDistSqr = dist;
+                    best = container;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    private static void spawnFallingStreamParticles(
+            ServerLevel level,
+            Vec3 top,
+            @Nullable Vec3 bottom,
+            GranularMaterial material
+    ) {
+        if (material == null || material.id() <= 0) {
+            return;
+        }
+        var block = material.sourceBlock() != null ? material.sourceBlock() : Blocks.DIRT;
+        BlockParticleOption particle = new BlockParticleOption(ParticleTypes.BLOCK, block.defaultBlockState());
+
+        double targetY = bottom != null ? bottom.y : top.y - 3.8D;
+        double fallDistance = Math.max(0.2D, top.y - targetY);
+
+        for (int i = 0; i < 4; i++) {
+            double fraction = level.getRandom().nextDouble();
+            double py = top.y - fraction * fallDistance;
+            double px = top.x + (level.getRandom().nextDouble() - 0.5D) * 0.25D;
+            double pz = top.z + (level.getRandom().nextDouble() - 0.5D) * 0.25D;
+            level.sendParticles(particle, px, py, pz, 1, 0.02D, -0.22D, 0.02D, 0.05D);
+        }
     }
 
     @Nullable
@@ -249,18 +375,25 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
         return null;
     }
 
+    /**
+     * Selected belt runs to model +X and rises upwards (-18 deg around Z).
+     * With scale(-1, -1, 1), that is world -right (distance ~7.40m)
+     * and world +Y (height ~4.38m).
+     */
     private Vec3 selectedOutputPoint() {
         return position()
-                .add(rightVector().scale(3.80D))
-                .add(forwardVector().scale(0.30D))
-                .add(0.0D, 4.05D, 0.0D);
+                .add(rightVector().scale(-7.20D))
+                .add(0.0D, 4.38D, 0.0D);
     }
 
+    /**
+     * Remainder belt runs to model -Z and rises upwards (-18 deg around X).
+     * That is world -forward (distance ~7.45m) and world +Y (height ~4.56m).
+     */
     private Vec3 remainderOutputPoint() {
         return position()
-                .add(forwardVector().scale(-4.45D))
-                .add(rightVector().scale(-0.15D))
-                .add(0.0D, 4.10D, 0.0D);
+                .add(forwardVector().scale(-7.45D))
+                .add(0.0D, 4.56D, 0.0D);
     }
 
     private Vec3 forwardVector() {
@@ -403,46 +536,107 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
     public boolean canReceiveAt(Vec3 worldPoint) {
         Vec3 delta = worldPoint.subtract(position());
 
-        double localForward =
-                delta.dot(forwardVector());
-        double localRight =
-                delta.dot(rightVector());
+        double localForward = delta.dot(forwardVector());
+        double localRight = delta.dot(rightVector());
 
-        return Math.abs(localRight) <= 1.12D
-                && localForward >= -1.55D
-                && localForward <= 1.55D
-                && delta.y >= 2.15D
-                && delta.y <= 7.00D;
+        // Generous catchment funnel over and around the hopper.
+        // A dump truck tailgate, loader bucket, or excavator bucket does not
+        // have to sit with millimeter precision inside the mouth; any discharge
+        // point projecting over the hopper perimeter or feed chute is accepted.
+        return Math.abs(localRight) <= 2.35D
+                && Math.abs(localForward) <= 2.35D
+                && delta.y >= 0.65D
+                && delta.y <= 18.00D;
+    }
+
+    /**
+     * Pull granular terrain that has landed in the hopper chute or on the feed deck
+     * directly into the buffer. A missed dump that forms terrain blocks in the hopper area
+     * is automatically drawn in.
+     */
+    private void ingestHopperTerrain(ServerLevel level) {
+        int room = CAPACITY - buffer.totalUnits();
+        if (room <= 0) {
+            return;
+        }
+
+        int budget = Math.min(room, 512);
+        int minY = Mth.floor(getY() + 1.15D);
+        int maxY = Mth.floor(getY() + 8.00D);
+        Vec3 forward = forwardVector();
+        Vec3 right = rightVector();
+
+        for (double localForward = -1.80D; localForward <= 1.80D; localForward += 0.60D) {
+            for (double localRight = -1.80D; localRight <= 1.80D; localRight += 0.60D) {
+                if (budget <= 0) {
+                    return;
+                }
+
+                Vec3 column = position()
+                        .add(forward.scale(localForward))
+                        .add(right.scale(localRight));
+                int x = Mth.floor(column.x);
+                int z = Mth.floor(column.z);
+
+                for (int y = maxY; y >= minY && budget > 0; y--) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    GranularComposition before =
+                            GroundworksApi.getComposition(level, pos);
+                    if (before.isEmpty()) {
+                        continue;
+                    }
+
+                    int want = Math.min(budget, before.totalUnits());
+                    ExcavationResult dug = GroundworksApi.excavate(level, pos, want);
+                    if (!dug.success()) {
+                        continue;
+                    }
+
+                    GranularComposition taken = before.copy()
+                            .extractProportional(dug.unitsRemoved());
+                    int added = acceptComposition(taken);
+                    int leftover = dug.unitsRemoved() - added;
+                    if (leftover > 0 && dug.material() != null) {
+                        GroundworksApi.deposit(
+                                level,
+                                pos,
+                                dug.material(),
+                                leftover
+                        );
+                    }
+                    budget -= added;
+                }
+            }
+        }
+    }
+
+    private static void giveMachineItem(Player player) {
+        ItemStack stack = new ItemStack(
+                GroundworksGradationScreenMod.GRADATION_SCREEN_ITEM
+        );
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
     }
 
     @Override
-    public InteractionResult interact(
-            Player player,
-            InteractionHand hand,
-            Vec3 location
-    ) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
 
         if (player.isSecondaryUseActive()
                 && held.isEmpty()) {
             if (!isEmpty()) {
                 if (!level().isClientSide()) {
-                    player.sendOverlayMessage(
-                            Component.translatable(
+                    player.displayClientMessage(Component.translatable(
                                     "message.pw_groundworks_gradation_screen.not_empty"
-                            )
-                    );
+                            ), true);
                 }
                 return InteractionResult.FAIL;
             }
 
             if (!level().isClientSide()) {
                 if (!player.getAbilities().instabuild) {
-                    player.getInventory().add(
-                            new ItemStack(
-                                    GroundworksGradationScreenMod.GRADATION_SCREEN_ITEM
-                            )
-                    );
+                    giveMachineItem(player);
                 }
 
                 level().playSound(
@@ -472,11 +666,12 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
 
             setSelectedMaterial(material.id());
 
-            player.sendOverlayMessage(
+            player.displayClientMessage(
                     Component.translatable(
                             "message.pw_groundworks_gradation_screen.selected_material",
                             material.name()
-                    )
+                    ),
+                    true
             );
 
             level().playSound(
@@ -538,18 +733,63 @@ public class GradationScreenEntity extends Entity implements IWorldGranularConta
     }
 
     private void syncState() {
-        entityData.set(
-                STORED_UNITS,
-                Mth.clamp(buffer.totalUnits(), 0, CAPACITY)
-        );
+        int total = Mth.clamp(buffer.totalUnits(), 0, CAPACITY);
+        entityData.set(STORED_UNITS, total);
+
+        int selectedId = getSelectedMaterialId();
+        int selectedUnits = buffer.unitsOf(selectedId);
+        entityData.set(SELECTED_UNITS, selectedUnits);
+
+        entityData.set(REMAINDER_MATERIAL_ID, dominantRemainderMaterialId());
+    }
+
+    public int dominantRemainderMaterialId() {
+        int selected = getSelectedMaterialId();
+        int[] counts = buffer.toArray();
+        int bestId = 0;
+        int bestCount = 0;
+        for (int id = 1; id < counts.length; id++) {
+            if (id == selected) {
+                continue;
+            }
+            if (counts[id] > bestCount) {
+                bestCount = counts[id];
+                bestId = id;
+            }
+        }
+        if (bestId > 0) {
+            return bestId;
+        }
+        return selected == GranularMaterialRegistry.DIRT.id()
+                ? GranularMaterialRegistry.GRAVEL.id()
+                : GranularMaterialRegistry.DIRT.id();
     }
 
     public int getSelectedMaterialId() {
         return entityData.get(SELECTED_MATERIAL_ID);
     }
 
+    public int getRemainderMaterialId() {
+        return entityData.get(REMAINDER_MATERIAL_ID);
+    }
+
     public int getStoredUnitsForRender() {
         return entityData.get(STORED_UNITS);
+    }
+
+    public int getSelectedUnitsForRender() {
+        return entityData.get(SELECTED_UNITS);
+    }
+
+    public boolean hasSelectedStream() {
+        return isActive() && getStoredUnitsForRender() > 0 && getSelectedUnitsForRender() > 0;
+    }
+
+    public boolean hasRemainderStream() {
+        int total = getStoredUnitsForRender();
+        int selected = getSelectedUnitsForRender();
+        int remainder = total - selected;
+        return isActive() && total > 0 && remainder > 0;
     }
 
     public boolean isActive() {

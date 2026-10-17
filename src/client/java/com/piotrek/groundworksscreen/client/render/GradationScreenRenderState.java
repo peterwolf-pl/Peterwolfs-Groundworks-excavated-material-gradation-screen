@@ -7,5 +7,9 @@ public class GradationScreenRenderState extends EntityRenderState {
     public boolean active;
     public float beltPhase;
     public int selectedMaterialId;
+    public int remainderMaterialId;
     public int storedUnits;
+    public int selectedUnits;
+    public boolean hasSelectedStream;
+    public boolean hasRemainderStream;
 }
